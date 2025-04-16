@@ -11,12 +11,17 @@ import { wait } from '../__fixtures__/wait.js'
 
 // Create mocks for the tapis validators
 const isTapisAppSpec = jest.fn().mockImplementation(() => true)
+// Create mock for readJsonFile
+const readJsonFile = jest.fn().mockImplementation(() => ({ mockAppSpec: true }))
 
 // Mocks should be declared before the module being tested is imported.
 jest.unstable_mockModule('@actions/core', () => core)
 jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
 jest.unstable_mockModule('../src/tapis/validators.js', () => ({
   isTapisAppSpec
+}))
+jest.unstable_mockModule('../src/utils/reader.js', () => ({
+  readJsonFile
 }))
 
 // The module being tested should be imported dynamically. This ensures that the
@@ -37,6 +42,9 @@ describe('main.ts', () => {
 
     // Reset the validator mock to return true by default
     isTapisAppSpec.mockReset().mockReturnValue(true)
+
+    // Reset the readJsonFile mock
+    readJsonFile.mockReset().mockReturnValue({ mockAppSpec: true })
   })
 
   afterEach(() => {
@@ -47,7 +55,14 @@ describe('main.ts', () => {
     await run()
 
     // Verify the validator was called with the correct path
-    expect(isTapisAppSpec).toHaveBeenCalledWith('path/to/app-spec.json')
+    expect(isTapisAppSpec).toHaveBeenCalledWith({ mockAppSpec: true })
+
+    // Verify readJsonFile was called with the correct path
+    expect(readJsonFile).toHaveBeenCalledWith('path/to/app-spec.json')
+
+    // Verify debug logs were called
+    expect(core.debug).toHaveBeenCalledWith('Waiting 500 milliseconds ...')
+    expect(core.debug).toHaveBeenCalledTimes(3) // Three debug calls in the function
 
     // Verify the time output was set.
     expect(core.setOutput).toHaveBeenNthCalledWith(
@@ -91,5 +106,17 @@ describe('main.ts', () => {
       1,
       'File path/to/app-spec.json is not a valid Tapis app spec'
     )
+  })
+
+  it('Sets a failed status when file reading fails', async () => {
+    // Mock readJsonFile to throw an error
+    readJsonFile.mockImplementation(() => {
+      throw new Error('File reading error')
+    })
+
+    await run()
+
+    // Verify that the action was marked as failed
+    expect(core.setFailed).toHaveBeenNthCalledWith(1, 'File reading error')
   })
 })
