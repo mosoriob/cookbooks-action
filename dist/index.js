@@ -27260,6 +27260,24 @@ async function wait(milliseconds) {
     });
 }
 
+const isTapisAppSpec = (content) => {
+    return content.type === 'tapis-app';
+};
+
+const readFile = (filePath) => {
+    // Check if the file exists
+    if (!require$$1.existsSync(filePath)) {
+        throw new Error(`File ${filePath} does not exist`);
+    }
+    // Read the file
+    const fileContent = require$$1.readFileSync(filePath, 'utf8');
+    return fileContent;
+};
+const readJsonFile = (filePath) => {
+    const fileContent = readFile(filePath);
+    return JSON.parse(fileContent);
+};
+
 /**
  * The main function for the action.
  *
@@ -27268,6 +27286,11 @@ async function wait(milliseconds) {
 async function run() {
     try {
         const ms = coreExports.getInput('milliseconds');
+        const tapisAppSpec = coreExports.getInput('tapis_app_spec');
+        const tapisAppSpecContent = readJsonFile(tapisAppSpec);
+        if (!isTapisAppSpec(tapisAppSpecContent)) {
+            throw new Error(`File ${tapisAppSpec} is not a valid Tapis app spec`);
+        }
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         coreExports.debug(`Waiting ${ms} milliseconds ...`);
         // Log the current timestamp, wait, then log the new timestamp
