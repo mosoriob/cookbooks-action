@@ -20,7 +20,7 @@ inputs:
       Must be a valid path to a .json file that exists in the repository.
       Example: './specs/app-spec.json'
     required: true
-    default: ''
+    default: '__fixtures__/app.json'
 
 # Define your outputs here.
 outputs:
