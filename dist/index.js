@@ -27260,7 +27260,15 @@ async function wait(milliseconds) {
     });
 }
 
-const isTapisAppSpec = (content) => {
+const isTapisApp = (content) => {
+    if (!content.id ||
+        !content.version ||
+        !content.description ||
+        !content.owner ||
+        !content.runtime ||
+        !content.jobType ||
+        !content.jobAttributes)
+        return false;
     return true;
 };
 
@@ -27288,7 +27296,9 @@ async function run() {
         const ms = coreExports.getInput('milliseconds');
         const tapisAppSpec = coreExports.getInput('tapis_app_spec');
         const tapisAppSpecContent = readJsonFile(tapisAppSpec);
-        if (!isTapisAppSpec(tapisAppSpecContent)) ;
+        if (!isTapisApp(tapisAppSpecContent)) {
+            throw new Error('File is not a valid Tapis app spec');
+        }
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         coreExports.debug(`Waiting ${ms} milliseconds ...`);
         // Log the current timestamp, wait, then log the new timestamp

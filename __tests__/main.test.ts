@@ -9,17 +9,25 @@ import { jest } from '@jest/globals'
 import * as core from '../__fixtures__/core.js'
 import { wait } from '../__fixtures__/wait.js'
 
-// Create mocks for the tapis validators
-const isTapisAppSpec = jest.fn().mockImplementation(() => true)
 // Create mock for readJsonFile
-const readJsonFile = jest.fn().mockImplementation(() => ({ mockAppSpec: true }))
+const readJsonFile = jest.fn().mockImplementation(() => ({
+  id: 'test-app',
+  version: '1.0.0',
+  description: 'Test app',
+  owner: 'test-owner',
+  enabled: true,
+  runtime: 'SINGULARITY',
+  jobType: 'BATCH',
+  jobAttributes: {
+    execSystemId: 'ls6',
+    execSystemExecDir: '${JobWorkingDir}',
+    execSystemInputDir: '${JobWorkingDir}',
+    execSystemOutputDir: '${JobWorkingDir}/output'
+  }
+}))
 
 // Mocks should be declared before the module being tested is imported.
 jest.unstable_mockModule('@actions/core', () => core)
-jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
-jest.unstable_mockModule('../src/tapis/validators.js', () => ({
-  isTapisAppSpec
-}))
 jest.unstable_mockModule('../src/utils/reader.js', () => ({
   readJsonFile
 }))
@@ -40,11 +48,22 @@ describe('main.ts', () => {
     // Mock the wait function so that it does not actually wait.
     wait.mockImplementation(() => Promise.resolve('done!'))
 
-    // Reset the validator mock to return true by default
-    isTapisAppSpec.mockReset().mockReturnValue(true)
-
     // Reset the readJsonFile mock
-    readJsonFile.mockReset().mockReturnValue({ mockAppSpec: true })
+    readJsonFile.mockReset().mockReturnValue({
+      id: 'test-app',
+      version: '1.0.0',
+      description: 'Test app',
+      owner: 'test-owner',
+      enabled: true,
+      runtime: 'SINGULARITY',
+      jobType: 'BATCH',
+      jobAttributes: {
+        execSystemId: 'ls6',
+        execSystemExecDir: '${JobWorkingDir}',
+        execSystemInputDir: '${JobWorkingDir}',
+        execSystemOutputDir: '${JobWorkingDir}/output'
+      }
+    })
   })
 
   afterEach(() => {
@@ -53,9 +72,6 @@ describe('main.ts', () => {
 
   it('Sets the time output', async () => {
     await run()
-
-    // Verify the validator was called with the correct path
-    expect(isTapisAppSpec).toHaveBeenCalledWith({ mockAppSpec: true })
 
     // Verify readJsonFile was called with the correct path
     expect(readJsonFile).toHaveBeenCalledWith('path/to/app-spec.json')
@@ -96,15 +112,18 @@ describe('main.ts', () => {
   })
 
   it('Sets a failed status when tapis app spec is invalid', async () => {
-    // Mock validator to return false (invalid spec)
-    isTapisAppSpec.mockReturnValue(false)
+    // Mock readJsonFile to return invalid spec
+    readJsonFile.mockReturnValue({
+      name: 'test-app',
+      non_property: 'non_property'
+    })
 
     await run()
 
     // Verify that the action was marked as failed.
     expect(core.setFailed).toHaveBeenNthCalledWith(
       1,
-      'File path/to/app-spec.json is not a valid Tapis app spec'
+      'File is not a valid Tapis app spec'
     )
   })
 
