@@ -42,6 +42,7 @@ describe('main.ts', () => {
     core.getInput.mockImplementation((name) => {
       if (name === 'milliseconds') return '500'
       if (name === 'tapis_app_spec') return 'path/to/app-spec.json'
+      if (name === 'TAPIS_TOKEN') return 'test-token'
       return ''
     })
 
@@ -89,11 +90,30 @@ describe('main.ts', () => {
     )
   })
 
+  it('Sets a failed status when TAPIS_TOKEN is not provided', async () => {
+    // Mock input to not return TAPIS_TOKEN
+    core.getInput.mockImplementation((name) => {
+      if (name === 'milliseconds') return '500'
+      if (name === 'tapis_app_spec') return 'path/to/app-spec.json'
+      if (name === 'TAPIS_TOKEN') return ''
+      return ''
+    })
+
+    await run()
+
+    // Verify that the action was marked as failed
+    expect(core.setFailed).toHaveBeenNthCalledWith(
+      1,
+      'Input required and not supplied: TAPIS_TOKEN'
+    )
+  })
+
   it('Sets a failed status when milliseconds is not a number', async () => {
     // Mock input to return invalid milliseconds
     core.getInput.mockImplementation((name) => {
       if (name === 'milliseconds') return 'this is not a number'
       if (name === 'tapis_app_spec') return 'path/to/app-spec.json'
+      if (name === 'TAPIS_TOKEN') return 'test-token'
       return ''
     })
 

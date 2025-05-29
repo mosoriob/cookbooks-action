@@ -38,6 +38,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.11.1",
+    "@tapis/tapis-typescript": "^0.0.55",
     "@tapis/tapis-typescript-apps": "^0.0.9"
   },
   "devDependencies": {
