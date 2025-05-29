@@ -16,15 +16,32 @@ export async function run(): Promise<void> {
     const tapisToken: string = core.getInput('TAPIS_TOKEN', { required: true })
     const tapisBasePath: string =
       core.getInput('TAPIS_BASE_PATH') || 'https://portals.tapis.io/v3'
+    const dockerImageTags: string = core.getInput('docker_image_tags', {
+      required: true
+    })
+
+    // Get the first tag from the list
+    const tags = dockerImageTags.split(',')
+    if (tags.length === 0) {
+      throw new Error('No Docker image tags provided')
+    }
+    const imageTag = tags[0]
+
     const tapisAppSpecContent = readJsonFile(tapisAppSpec)
 
     if (!isTapisApp(tapisAppSpecContent)) {
       throw new Error('File is not a valid Tapis app spec')
     }
 
+    // Update the container image in the app spec with the first tag
+    const updatedAppSpec = {
+      ...tapisAppSpecContent,
+      containerImage: imageTag
+    }
+
     // Create the Tapis app
     const result = await create(
-      tapisAppSpecContent as unknown as Apps.ReqPostApp,
+      updatedAppSpec as unknown as Apps.ReqPostApp,
       tapisBasePath,
       tapisToken
     )
@@ -34,7 +51,7 @@ export async function run(): Promise<void> {
 
     // Set outputs for other workflow steps to use
     core.setOutput('app_result', JSON.stringify(result))
-    core.info('Successfully created Tapis app')
+    core.info(`Successfully created Tapis app with image: ${imageTag}`)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
