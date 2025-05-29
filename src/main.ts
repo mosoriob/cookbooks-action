@@ -11,6 +11,7 @@ export async function run(): Promise<void> {
   try {
     const ms: string = core.getInput('milliseconds')
     const tapisAppSpec: string = core.getInput('tapis_app_spec')
+    const tapisToken: string = core.getInput('TAPIS_TOKEN', { required: true })
     const tapisAppSpecContent = readJsonFile(tapisAppSpec)
 
     if (!isTapisApp(tapisAppSpecContent)) {
