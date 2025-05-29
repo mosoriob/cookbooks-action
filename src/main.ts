@@ -2,6 +2,8 @@ import * as core from '@actions/core'
 import { wait } from './wait.js'
 import { isTapisApp } from './tapis/validators.js'
 import { readJsonFile } from './utils/reader.js'
+import create from './tapis/apps/create.js'
+import { Apps } from '@tapis/tapis-typescript'
 /**
  * The main function for the action.
  *
@@ -12,11 +14,20 @@ export async function run(): Promise<void> {
     const ms: string = core.getInput('milliseconds')
     const tapisAppSpec: string = core.getInput('tapis_app_spec')
     const tapisToken: string = core.getInput('TAPIS_TOKEN', { required: true })
+    const tapisBasePath: string =
+      core.getInput('TAPIS_BASE_PATH') || 'https://portals.tapis.io/v3'
     const tapisAppSpecContent = readJsonFile(tapisAppSpec)
 
     if (!isTapisApp(tapisAppSpecContent)) {
       throw new Error('File is not a valid Tapis app spec')
     }
+
+    // Create the Tapis app
+    await create(
+      tapisAppSpecContent as unknown as Apps.ReqPostApp,
+      tapisBasePath,
+      tapisToken
+    )
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Waiting ${ms} milliseconds ...`)
