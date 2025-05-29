@@ -13,6 +13,14 @@ inputs:
     description: Your input description here
     required: true
     default: '1000'
+  tapis_app_spec:
+    description: |
+      Path to the Tapis application specification JSON file.
+      This file should follow the Tapis application specification format.
+      Must be a valid path to a .json file that exists in the repository.
+      Example: './specs/app-spec.json'
+    required: true
+    default: '__fixtures__/app.json'
 
 # Define your outputs here.
 outputs:

@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import { wait } from './wait.js'
-
+import { isTapisApp } from './tapis/validators.js'
+import { readJsonFile } from './utils/reader.js'
 /**
  * The main function for the action.
  *
@@ -9,6 +10,12 @@ import { wait } from './wait.js'
 export async function run(): Promise<void> {
   try {
     const ms: string = core.getInput('milliseconds')
+    const tapisAppSpec: string = core.getInput('tapis_app_spec')
+    const tapisAppSpecContent = readJsonFile(tapisAppSpec)
+
+    if (!isTapisApp(tapisAppSpecContent)) {
+      throw new Error('File is not a valid Tapis app spec')
+    }
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Waiting ${ms} milliseconds ...`)
